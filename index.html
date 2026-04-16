@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PetroAI Options Flow Scanner</title>
+<style>
+:root {
+  --tos-bg:       #1a1a1a;
+  --tos-bg2:      #222222;
+  --tos-bg3:      #2a2a2a;
+  --tos-bg4:      #303030;
+  --tos-border:   #3a3a3a;
+  --tos-border2:  #4a4a4a;
+  --tos-text:     #d4d4d4;
+  --tos-text2:    #999999;
+  --tos-text3:    #666666;
+  --tos-green:    #00c176;
+  --tos-red:      #ff4444;
+  --tos-blue:     #4a9eff;
+  --tos-amber:    #ffaa00;
+  --tos-purple:   #9b6dff;
+  --tos-cyan:     #00d4d4;
+  --tos-header:   #1e2a1e;
+  --tos-accent:   #2d4a2d;
+  --font-ui:   'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-data: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--tos-bg); color: var(--tos-text); font-family: var(--font-ui); font-size: 12px; overflow-x: hidden; }
+
+/* ── TITLE BAR ── */
+.titlebar {
+  background: linear-gradient(180deg, #2a3a2a 0%, #1e2a1e 100%);
+  border-bottom: 2px solid #3a6a3a;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.titlebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid #3a4a3a;
+}
+.app-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #80cc80;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.app-title span { color: var(--tos-green); }
+.titlebar-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--tos-text2);
+}
+.status-item { display: flex; align-items: center; gap: 5px; }
+.status-led { width: 8px; height: 8px; border-radius: 50%; background: #444; border: 1px solid #555; }
+.status-led.on { background: var(--tos-green); box-shadow: 0 0 5px var(--tos-green); }
+.status-led.warn { background: var(--tos-amber); box-shadow: 0 0 5px var(--tos-amber); }
+
+/* ── MENU BAR ── */
+.menubar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: #1e2a1e;
+}
+.menu-btn {
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--tos-text2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.1s;
+}
+.menu-btn:hover { background: var(--tos-bg3); border-color: var(--tos-border); color: var(--tos-text); }
+.menu-btn.active { background: var(--tos-accent); border-color: #3a6a3a; color: var(--tos-green); }
+.menu-sep { width: 1px; height: 16px; background: var(--tos-border); margin: 0 4px; }
+.scan-btn {
+  margin-left: auto;
+  padding: 4px 16px;
+  background: linear-gradient(180deg, #2a6a2a, #1a4a1a);
+  border: 1px solid #4a8a4a;
+  color: var(--tos-green);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}
+.scan-btn:hover { background: linear-gradient(180deg, #3a7a3a, #2a5a2a); }
+.scan-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── MAIN LAYOUT ── */
+.workspace {
+  display: grid;
+  grid-template-columns: 200px 1fr 220px;
+  grid-template-rows: auto 1fr;
+  height: calc(100vh - 80px);
+  gap: 0;
+}
+
+/* ── LEFT PANEL — WATCHLIST ── */
+.left-panel {
+  background: var(--tos-bg2);
+  border-right: 1px solid var(--tos-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  grid-row: 1 / 3;
+}
+.panel-titlebar {
+  background: linear-gradient(180deg, #2a3a2a, #1e2e1e);
+  border-bottom: 1px solid var(--tos-border);
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #80cc80;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-titlebar span { color: var(--tos-text3); font-weight: normal; }
+.wl-table { flex: 1; overflow-y: auto; }
+.wl-header { display: grid; grid-template-columns: 1fr 45px; padding: 3px 6px; background: var(--tos-bg3); border-bottom: 1px solid var(--tos-border); }
+.wl-header span { font-size: 9px; color: var(--tos-text3); text-transform: uppercase; }
+.wl-row {
+  display: grid;
+  grid-template-columns: 1fr 45px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #252525;
+  cursor: pointer;
+  transition: background 0.1s;
+  align-items: center;
+}
+.wl-row:hover { background: var(--tos-bg3); }
+.wl-row.flagged { background: rgba(0,193,118,0.08); }
+.wl-row.scanning { background: rgba(74,158,255,0.08); }
+.wl-sym { font-size: 12px; font-weight: bold; color: var(--tos-text); }
+.wl-layer-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; display: inline-block; margin-right: 4px; }
+.wl-sub { font-size: 9px; color: var(--tos-text3); margin-top: 1px; }
+.wl-status-col { text-align: right; }
+.wl-flag { font-size: 10px; color: var(--tos-green); }
+.wl-scan { font-size: 10px; color: var(--tos-blue); }
+.wl-section { padding: 3px 6px; background: #252525; border-bottom: 1px solid var(--tos-border); font-size: 9px; color: var(--tos-text3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── CENTER — SCAN GRID ── */
+.center-panel {
+  background: var(--tos-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.grid-toolbar {
+  background: var(--tos-bg2);
+  border-bottom: 1px solid var(--tos-border);
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.grid-toolbar-title { font-size: 11px; font-weight: bold; color: #80cc80; margin-right: 8px; }
+.filter-btn {
+  padding: 2px 8px;
+  background: var(--tos-bg3);
+  border: 1px solid var(--tos-border);
+  color: var(--tos-text2);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 1px;
+}
+.filter-btn.active { background: var(--tos-accent); border-color: #4a8a4a; color: var(--tos-green); }
+.grid-toolbar-right { margin-left: auto; font-size: 10px; color: var(--tos-text3); }
+
+.data-grid { flex: 1; overflow-y: auto; }
+.grid-head {
+  display: grid;
+  grid-template-columns: 65px 90px 52px 100px 75px 70px 65px 55px 1fr;
+  padding: 4px 8px;
+  background: var(--tos-bg3);
+  border-bottom: 2px solid var(--tos-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.grid-head span {
+  font-size: 10px;
+  color: var(--tos-text3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+.grid-head span:hover { color: var(--tos-text2); }
+.grid-row {
+  display: grid;
+  grid-template-columns: 65px 90px 52px 100px 75px 70px 65px 55px 1fr;
+  padding: 4px 8px;
+  border-bottom: 1px solid #252525;
+  cursor: pointer;
+  transition: background 0.08s;
+  align-items: center;
+}
+.grid-row:hover { background: #2a2a2a; }
+.grid-row.selected { background: #1e3a1e; border-left: 2px solid var(--tos-green); }
+.grid-row.hot { border-left: 3px solid var(--tos-green); }
+.grid-row.warm { border-left: 3px solid var(--tos-amber); }
+.grid-row.cold { border-left: 3px solid #444; }
+.cell-ticker { font-size: 12px; font-weight: bold; color: #e0e0e0; font-family: var(--font-ui); }
+.cell-strike { font-size: 11px; color: var(--tos-text); font-family: var(--font-data); }
+.cell-type { font-size: 10px; font-weight: bold; padding: 1px 4px; border-radius: 1px; font-family: var(--font-ui); }
+.type-c { background: rgba(0,193,118,0.2); color: var(--tos-green); border: 1px solid rgba(0,193,118,0.4); }
+.type-p { background: rgba(255,68,68,0.2); color: var(--tos-red); border: 1px solid rgba(255,68,68,0.4); }
+.cell-vol { font-size: 11px; color: var(--tos-text); text-align: right; padding-right: 4px; font-family: var(--font-data); }
+.cell-ratio { font-size: 11px; font-weight: bold; text-align: right; padding-right: 4px; font-family: var(--font-data); }
+.ratio-hot { color: var(--tos-green); }
+.ratio-warm { color: var(--tos-amber); }
+.ratio-cool { color: var(--tos-text2); }
+.cell-prem { font-size: 11px; color: var(--tos-amber); text-align: right; padding-right: 4px; font-family: var(--font-data); }
+.cell-delta { font-size: 11px; color: var(--tos-cyan); text-align: right; padding-right: 4px; font-family: var(--font-data); }
+.cell-signal { font-size: 10px; font-weight: bold; letter-spacing: 0.3px; }
+.sig-sweep { color: var(--tos-green); }
+.sig-accum { color: var(--tos-amber); }
+.sig-watch { color: var(--tos-blue); }
+.sig-penny { color: #ff44ff; font-size:11px; letter-spacing:0.5px; }
+.cell-layer { font-size: 10px; color: var(--tos-text3); }
+
+.empty-grid {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 200px; color: var(--tos-text3); font-size: 11px; text-align: center; gap: 8px;
+}
+.empty-grid .big { font-size: 13px; color: var(--tos-text2); }
+
+/* ── METRICS BAR ── */
+.metrics-bar {
+  background: var(--tos-bg2);
+  border-top: 1px solid var(--tos-border);
+  border-bottom: 1px solid var(--tos-border);
+  display: flex;
+  align-items: stretch;
+  grid-column: 2;
+}
+.metric-cell {
+  flex: 1;
+  padding: 6px 12px;
+  border-right: 1px solid var(--tos-border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.metric-cell:last-child { border-right: none; }
+.metric-lbl { font-size: 9px; color: var(--tos-text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.metric-num { font-size: 16px; font-weight: bold; color: var(--tos-text); font-family: var(--font-data); }
+.metric-sub { font-size: 9px; color: var(--tos-text3); }
+.m-green { color: var(--tos-green) !important; }
+.m-amber { color: var(--tos-amber) !important; }
+.m-blue  { color: var(--tos-blue)  !important; }
+
+/* ── RIGHT PANEL — DETAIL + LOG ── */
+.right-panel {
+  background: var(--tos-bg2);
+  border-left: 1px solid var(--tos-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  grid-row: 1 / 3;
+}
+.detail-section { border-bottom: 1px solid var(--tos-border); }
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-bottom: 1px solid #252525;
+  align-items: center;
+}
+.detail-row:last-child { border-bottom: none; }
+.d-key { font-size: 10px; color: var(--tos-text3); font-family: var(--font-ui); }
+.d-val { font-size: 11px; color: var(--tos-text); font-weight: bold; font-family: var(--font-data); }
+.d-green { color: var(--tos-green) !important; }
+.d-amber { color: var(--tos-amber) !important; }
+.d-cyan  { color: var(--tos-cyan)  !important; }
+.d-red   { color: var(--tos-red)   !important; }
+
+.log-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.log-body { flex: 1; overflow-y: auto; padding: 2px 0; }
+.log-entry { padding: 2px 8px; font-size: 10px; color: var(--tos-text2); border-bottom: 1px solid #252525; line-height: 1.5; font-family: var(--font-data); }
+.log-time { color: var(--tos-text3); margin-right: 4px; }
+.log-ok   { color: var(--tos-green); }
+.log-warn { color: var(--tos-amber); }
+.log-err  { color: var(--tos-red);   }
+.log-info { color: var(--tos-blue);  }
+
+/* ── SETTINGS OVERLAY ── */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.overlay.open { display: flex; }
+.overlay-panel {
+  background: var(--tos-bg2);
+  border: 1px solid #4a8a4a;
+  border-radius: 2px;
+  width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+}
+.overlay-titlebar {
+  background: linear-gradient(180deg, #2a3a2a, #1e2e1e);
+  border-bottom: 1px solid var(--tos-border);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: bold;
+  color: #80cc80;
+  letter-spacing: 1px;
+}
+.close-btn {
+  background: #3a1a1a; border: 1px solid #6a2a2a; color: var(--tos-red);
+  font-family: var(--font); font-size: 11px; padding: 2px 8px; cursor: pointer; border-radius: 1px;
+}
+.overlay-body { padding: 16px; overflow-y: auto; flex: 1; }
+.form-section { margin-bottom: 16px; }
+.form-section-title { font-size: 10px; color: var(--tos-text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; border-bottom: 1px solid var(--tos-border); padding-bottom: 4px; }
+.form-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.form-row label { font-size: 11px; color: var(--tos-text2); min-width: 140px; }
+.form-row input[type=text], .form-row input[type=password] {
+  flex: 1; background: var(--tos-bg3); border: 1px solid var(--tos-border);
+  color: var(--tos-text); font-family: var(--font-ui); font-size: 11px;
+  padding: 5px 8px; outline: none; border-radius: 1px;
+}
+.form-row input:focus { border-color: #4a8a4a; }
+.form-row input[type=range] { flex: 1; accent-color: var(--tos-green); }
+.form-row .range-val { font-size: 11px; color: var(--tos-green); min-width: 36px; text-align: right; }
+.overlay-footer {
+  border-top: 1px solid var(--tos-border);
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.tos-btn {
+  padding: 5px 14px; font-family: var(--font-ui); font-size: 11px;
+  border: 1px solid var(--tos-border); background: var(--tos-bg3);
+  color: var(--tos-text); cursor: pointer; border-radius: 1px;
+}
+.tos-btn-primary {
+  background: linear-gradient(180deg, #2a6a2a, #1a4a1a);
+  border-color: #4a8a4a; color: var(--tos-green); font-weight: bold;
+}
+.tos-btn:hover { background: var(--tos-bg4); }
+.tos-btn-primary:hover { background: linear-gradient(180deg, #3a7a3a, #2a5a2a); }
+
+/* ── HOWTO OVERLAY ── */
+.howto-step { display: flex; gap: 10px; margin-bottom: 12px; }
+.step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--tos-accent); border: 1px solid #4a8a4a; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--tos-green); font-weight: bold; flex-shrink: 0; }
+.step-body h4 { font-size: 11px; color: var(--tos-text); margin-bottom: 3px; }
+.step-body p { font-size: 10px; color: var(--tos-text2); line-height: 1.6; }
+.step-body code { background: var(--tos-bg3); padding: 1px 4px; color: var(--tos-green); font-size: 10px; border: 1px solid var(--tos-border); }
+.warn-box { background: rgba(255,170,0,0.08); border: 1px solid rgba(255,170,0,0.3); padding: 8px 10px; font-size: 10px; color: var(--tos-amber); line-height: 1.6; margin-bottom: 12px; border-radius: 1px; }
+.info-box { background: rgba(0,193,118,0.06); border: 1px solid rgba(0,193,118,0.2); padding: 8px 10px; font-size: 10px; color: #80cc80; line-height: 1.6; margin-bottom: 12px; border-radius: 1px; }
+
+.ff-check-item { display:flex;align-items:center;gap:8px;margin-bottom:7px; }
+.ff-check-item input[type=checkbox] { accent-color:var(--tos-green);width:13px;height:13px;flex-shrink:0; }
+.ff-check-item label { font-size:11px;color:var(--tos-text2);cursor:pointer; }
+.ff-check-item label:hover { color:var(--tos-text); }
+
+/* scrollbars */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--tos-bg2); }
+::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
+</style>
+</head>
+<body>
+
+<!-- TITLE BAR -->
+<div class="titlebar">
+  <div class="titlebar-top">
+    <div class="app-title">PetroAI <span>Options Flow Scanner</span> v1.0</div>
+    <div class="titlebar-status">
+      <div class="status-item">
+        <div class="status-led" id="api-led"></div>
+        <span id="api-status-txt">API: Not connected</span>
+      </div>
+      <div class="status-item">
+        <div class="status-led warn" id="mkt-led"></div>
+        <span id="mkt-status-txt">Market: checking...</span>
+      </div>
+      <span id="clock-txt" style="color:var(--tos-text3);">--:--:-- ET</span>
+    </div>
+  </div>
+  <div class="menubar">
+    <button class="menu-btn active" onclick="setView('scanner')">Flow Scanner</button>
+    <button class="menu-btn" onclick="setView('watchlist')">Watchlist</button>
+    <div class="menu-sep"></div>
+    <button class="menu-btn" onclick="openSettings()">Settings / API Keys</button>
+    <button class="menu-btn" onclick="openHowTo()">How to Use</button>
+    <button class="menu-btn" id="flow-first-btn" onclick="openFlowFirst()">Flow-First Setup</button>
+    <button class="scan-btn" id="scan-btn" onclick="runScan()">&#9654; RUN SCAN</button>
+  </div>
+</div>
+
+<!-- MAIN WORKSPACE -->
+<div class="workspace">
+
+  <!-- LEFT: WATCHLIST -->
+  <div class="left-panel">
+    <div class="panel-titlebar">Watchlist <span id="wl-count">18 symbols</span></div>
+    <div class="wl-table" id="wl-table"></div>
+  </div>
+
+  <!-- CENTER TOP: METRICS BAR -->
+  <div class="metrics-bar">
+    <div class="metric-cell">
+      <div class="metric-lbl">Scanned</div>
+      <div class="metric-num" id="m-scanned">—</div>
+      <div class="metric-sub">tickers</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-lbl">Flow alerts</div>
+      <div class="metric-num m-green" id="m-alerts">—</div>
+      <div class="metric-sub">vol/OI triggered</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-lbl">Sweeps</div>
+      <div class="metric-num m-amber" id="m-sweeps">—</div>
+      <div class="metric-sub">aggressive buys</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-lbl">⚡ Penny sweeps</div>
+      <div class="metric-num" id="m-penny" style="color:#ff44ff;">—</div>
+      <div class="metric-sub">sub-$0.10 big $</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-lbl">Top signal</div>
+      <div class="metric-num m-green" id="m-top" style="font-size:14px;">—</div>
+      <div class="metric-sub" id="m-top-sub">highest flow ratio</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-lbl">Active phase</div>
+      <div class="metric-num m-green" style="font-size:12px;">Materials</div>
+      <div class="metric-sub">Cu → U → Grid</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-lbl">Last scan</div>
+      <div class="metric-num" id="m-lastscan" style="font-size:11px;">—</div>
+      <div class="metric-sub" id="m-nextcan">auto every 15min</div>
+    </div>
+  </div>
+
+  <!-- CENTER BOTTOM: DATA GRID -->
+  <div class="center-panel">
+    <div class="grid-toolbar">
+      <span class="grid-toolbar-title">FLOW ALERTS</span>
+      <button class="filter-btn active" onclick="applyFilter('all',this)">ALL</button>
+      <button class="filter-btn" onclick="applyFilter('sweep',this)">SWEEPS</button>
+      <button class="filter-btn" onclick="applyFilter('accum',this)">ACCUM</button>
+      <button class="filter-btn" onclick="applyFilter('call',this)">CALLS</button>
+      <button class="filter-btn" onclick="applyFilter('hot',this)">HOT ONLY</button>
+      <button class="filter-btn" onclick="applyFilter('penny_sweep',this)">⚡ PENNY SWEEP</button>
+      <span class="grid-toolbar-right" id="alert-count-txt">0 alerts</span>
+    </div>
+    <div class="data-grid">
+      <div class="grid-head">
+        <span>SYMBOL</span>
+        <span>STRIKE / EXP</span>
+        <span>TYPE</span>
+        <span style="text-align:right;padding-right:4px;color:#00c176;">$ VALUE</span>
+        <span style="text-align:right;padding-right:4px;">VOL/OI</span>
+        <span style="text-align:right;padding-right:4px;">PREM</span>
+        <span style="text-align:right;padding-right:4px;">DTE</span>
+        <span>SIGNAL</span>
+        <span>LAYER</span>
+      </div>
+      <div id="grid-body">
+        <div class="empty-grid">
+          <div class="big">No scan data</div>
+          <div>Configure API keys in Settings then click RUN SCAN</div>
+          <div style="color:#4a8a4a;margin-top:4px;">► Settings → paste Schwab credentials → Save → Run Scan</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: DETAIL + LOG -->
+  <div class="right-panel">
+    <div class="panel-titlebar">Alert Detail</div>
+    <div class="detail-section" id="detail-section">
+      <div class="detail-row"><span class="d-key">Symbol</span><span class="d-val" id="d-sym">—</span></div>
+      <div class="detail-row"><span class="d-key">Strike</span><span class="d-val" id="d-strike">—</span></div>
+      <div class="detail-row"><span class="d-key">Expiration</span><span class="d-val" id="d-exp">—</span></div>
+      <div class="detail-row"><span class="d-key">Type</span><span class="d-val" id="d-type">—</span></div>
+      <div class="detail-row"><span class="d-key">Volume</span><span class="d-val d-green" id="d-vol">—</span></div>
+      <div class="detail-row"><span class="d-key">Open Interest</span><span class="d-val" id="d-oi">—</span></div>
+      <div class="detail-row"><span class="d-key">Vol/OI Ratio</span><span class="d-val d-green" id="d-ratio">—</span></div>
+      <div class="detail-row"><span class="d-key">Ask Premium</span><span class="d-val d-amber" id="d-prem">—</span></div>
+      <div class="detail-row"><span class="d-key">Delta</span><span class="d-val d-cyan" id="d-delta">—</span></div>
+      <div class="detail-row"><span class="d-key">IV Rank</span><span class="d-val" id="d-iv">—</span></div>
+      <div class="detail-row"><span class="d-key">Signal</span><span class="d-val d-green" id="d-signal">—</span></div>
+      <div class="detail-row"><span class="d-key">PetroAI Layer</span><span class="d-val" id="d-layer">—</span></div>
+      <div style="padding:8px;background:rgba(0,193,118,0.05);border-top:1px solid var(--tos-border);">
+        <div style="font-size:9px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:4px;">Next step</div>
+        <div style="font-size:10px;color:var(--tos-text2);line-height:1.6;" id="d-nextstep">Click any alert row to inspect</div>
+      </div>
+    </div>
+    <div class="log-section">
+      <div class="panel-titlebar">Activity Log <span id="log-count"></span></div>
+      <div class="log-body" id="log-body">
+        <div class="log-entry"><span class="log-time">--:--:--</span>Scanner ready. Add API keys in Settings.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="overlay" id="settings-overlay">
+  <div class="overlay-panel">
+    <div class="overlay-titlebar">
+      SETTINGS — SCHWAB API CONFIGURATION
+      <button class="close-btn" onclick="closeSettings()">✕ CLOSE</button>
+    </div>
+    <div class="overlay-body">
+      <div class="info-box">Your keys are saved in browser local storage only. They never leave your device — they go directly to Schwab's servers when you scan.</div>
+      <div class="form-section">
+        <div class="form-section-title">Schwab API Credentials</div>
+        <div class="form-row"><label>App Key (Client ID)</label><input type="password" id="cfg-key" placeholder="From developer.schwab.com" /></div>
+        <div class="form-row"><label>App Secret</label><input type="password" id="cfg-secret" placeholder="Generated with your app" /></div>
+        <div class="form-row"><label>Access Token</label><input type="password" id="cfg-token" placeholder="OAuth token — or use Token Helper file" /></div>
+      <div class="form-row"><label>Refresh Token</label><input type="password" id="cfg-refresh" placeholder="Paste refresh token — auto-renews every 28 min" /></div>
+      <div class="form-row"><label></label><button class="tos-btn" onclick="loadSavedToken()" style="font-size:10px;">⟳ Load token from Token Helper</button></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Primary Filter — Dollar Value</div>
+        <div class="form-row"><label>Min trade dollar value</label><input type="range" min="100000" max="5000000" step="100000" value="500000" id="thr-dollar" oninput="document.getElementById('thr-dollar-v').textContent='$'+(this.value/1000000>=1?(this.value/1000000).toFixed(1)+'M':(this.value/1000).toFixed(0)+'K')"/><span class="range-val" id="thr-dollar-v">$500K</span></div>
+        <div class="form-row"><label>Max DTE (days to expiry)</label><input type="range" min="1" max="30" step="1" value="14" id="thr-dte" oninput="document.getElementById('thr-dte-v').textContent=this.value+'d'"/><span class="range-val" id="thr-dte-v">14d</span></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">Secondary Filters</div>
+        <div class="form-row"><label>Min Vol/OI ratio</label><input type="range" min="1" max="20" step="1" value="3" id="thr-ratio" oninput="document.getElementById('thr-ratio-v').textContent=this.value+'x'"/><span class="range-val" id="thr-ratio-v">3x</span></div>
+        <div class="form-row"><label>Max IV rank</label><input type="range" min="10" max="80" step="5" value="50" id="thr-iv" oninput="document.getElementById('thr-iv-v').textContent=this.value+'%'"/><span class="range-val" id="thr-iv-v">50%</span></div>
+        <div class="form-row"><label>Max option premium ($)</label><input type="range" min="1" max="100" step="1" value="50" id="thr-prem" oninput="document.getElementById('thr-prem-v').textContent='$'+this.value"/><span class="range-val" id="thr-prem-v">$50</span></div>
+        <div class="form-row"><label>Min delta (OTM floor)</label><input type="range" min="1" max="25" step="1" value="3" id="thr-dmin" oninput="document.getElementById('thr-dmin-v').textContent='0.0'+this.value"/><span class="range-val" id="thr-dmin-v">0.03</span></div>
+        <div class="form-row"><label>Max delta (OTM ceiling)</label><input type="range" min="10" max="50" step="1" value="40" id="thr-dmax" oninput="document.getElementById('thr-dmax-v').textContent='0.'+this.value"/><span class="range-val" id="thr-dmax-v">0.40</span></div>
+        <div class="form-row"><label>Auto-scan interval (min)</label><input type="range" min="5" max="60" step="5" value="15" id="thr-interval" oninput="document.getElementById('thr-interval-v').textContent=this.value+'min'"/><span class="range-val" id="thr-interval-v">15min</span></div>
+      </div>
+    </div>
+    <div class="overlay-footer">
+      <button class="tos-btn" onclick="testConn()">TEST CONNECTION</button>
+      <button class="tos-btn tos-btn-primary" onclick="saveAll()">SAVE &amp; APPLY</button>
+    </div>
+  </div>
+</div>
+
+<!-- FLOW-FIRST WEEKLY SETUP OVERLAY -->
+<div class="overlay" id="flowfirst-overlay">
+  <div class="overlay-panel" style="width:720px;max-height:88vh;">
+    <div class="overlay-titlebar">
+      FLOW-FIRST WEEKLY SETUP — <span style="color:var(--tos-amber);font-size:10px;">COMPLETE BEFORE SCANNING</span>
+      <button class="close-btn" onclick="document.getElementById('flowfirst-overlay').classList.remove('open')">✕ CLOSE</button>
+    </div>
+    <div class="overlay-body" style="padding:0;">
+
+      <!-- STEP TABS -->
+      <div style="display:flex;border-bottom:1px solid var(--tos-border);background:var(--tos-bg3);">
+        <button class="ff-tab active" onclick="showFFTab(0)" id="ff-tab-0" style="flex:1;padding:10px;background:var(--tos-accent);border:none;border-bottom:2px solid var(--tos-green);color:var(--tos-green);font-family:var(--font-ui);font-size:11px;font-weight:bold;cursor:pointer;letter-spacing:0.5px;">STEP 1<br><span style="font-size:9px;font-weight:normal;color:#80cc80;">DEALER GAMMA</span></button>
+        <button class="ff-tab" onclick="showFFTab(1)" id="ff-tab-1" style="flex:1;padding:10px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--tos-text2);font-family:var(--font-ui);font-size:11px;font-weight:bold;cursor:pointer;letter-spacing:0.5px;">STEP 2<br><span style="font-size:9px;font-weight:normal;">CTA POSITIONING</span></button>
+        <button class="ff-tab" onclick="showFFTab(2)" id="ff-tab-2" style="flex:1;padding:10px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--tos-text2);font-family:var(--font-ui);font-size:11px;font-weight:bold;cursor:pointer;letter-spacing:0.5px;">STEP 3<br><span style="font-size:9px;font-weight:normal;">MACRO LIQUIDITY</span></button>
+        <button class="ff-tab" onclick="showFFTab(3)" id="ff-tab-3" style="flex:1;padding:10px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--tos-text2);font-family:var(--font-ui);font-size:11px;font-weight:bold;cursor:pointer;letter-spacing:0.5px;">SCORECARD<br><span style="font-size:9px;font-weight:normal;">WEEKLY BIAS</span></button>
+      </div>
+
+      <!-- STEP 1: DEALER GAMMA -->
+      <div class="ff-panel" id="ff-panel-0" style="padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="background:var(--tos-accent);border:1px solid var(--tos-green);padding:4px 10px;font-size:11px;color:var(--tos-green);font-weight:bold;border-radius:2px;">0–7 DAYS</div>
+          <div style="font-size:12px;color:var(--tos-text2);">Map where dealers are positioned — do they chase or pin?</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;border-radius:2px;">
+            <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:8px;">Key levels to mark</div>
+            <div class="ff-check-item"><input type="checkbox" id="g1" onchange="updateScore()"><label for="g1">Gamma flip strike (pos → neg)</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="g2" onchange="updateScore()"><label for="g2">OPEX / large expiry zones</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="g3" onchange="updateScore()"><label for="g3">High OI concentration strikes</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="g4" onchange="updateScore()"><label for="g4">Short gamma zones mapped (dealers chase)</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="g5" onchange="updateScore()"><label for="g5">Long gamma zones mapped (dealers pin)</label></div>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;border-radius:2px;">
+            <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:8px;">Data sources</div>
+            <a href="https://unusualwhales.com/flow/gamma" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;margin-bottom:6px;text-decoration:none;border:1px solid var(--tos-border);">↗ Unusual Whales — GEX Map</a>
+            <a href="https://unusualwhales.com/options/spx" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;margin-bottom:6px;text-decoration:none;border:1px solid var(--tos-border);">↗ SPX Options Chain</a>
+            <a href="https://www.spotgamma.com" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;text-decoration:none;border:1px solid var(--tos-border);">↗ SpotGamma — GEX Levels</a>
+          </div>
+        </div>
+
+        <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;border-radius:2px;margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:6px;">Your notes — dealer positioning this week</div>
+          <textarea id="gamma-notes" style="width:100%;background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-text);font-family:var(--font-data);font-size:11px;padding:8px;height:70px;resize:none;outline:none;" placeholder="e.g. Gamma flip at SPX 5200. Dealers short gamma below 5150 — expect acceleration on breaks. Pin zone 5180-5220 into Friday OPEX..."></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">Dealer regime</div>
+            <select id="dealer-regime" onchange="updateScore()" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-text);font-family:var(--font-ui);font-size:11px;padding:4px;width:100%;">
+              <option value="">-- Select --</option>
+              <option value="long">Long gamma (pinning)</option>
+              <option value="short">Short gamma (chasing)</option>
+              <option value="mixed">Mixed / transitioning</option>
+            </select>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">Gamma flip level</div>
+            <input type="text" id="gamma-flip" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-green);font-family:var(--font-data);font-size:13px;padding:4px;width:100%;text-align:center;" placeholder="e.g. 5200" />
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">OPEX date</div>
+            <input type="text" id="opex-date" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-amber);font-family:var(--font-data);font-size:13px;padding:4px;width:100%;text-align:center;" placeholder="e.g. Apr 19" />
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: CTA POSITIONING -->
+      <div class="ff-panel" id="ff-panel-1" style="padding:16px;display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="background:#2a2a1a;border:1px solid var(--tos-amber);padding:4px 10px;font-size:11px;color:var(--tos-amber);font-weight:bold;border-radius:2px;">7–14 DAYS</div>
+          <div style="font-size:12px;color:var(--tos-text2);">Where will systematic funds be forced to buy or sell?</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;border-radius:2px;">
+            <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:8px;">CTA checklist</div>
+            <div class="ff-check-item"><input type="checkbox" id="c1" onchange="updateScore()"><label for="c1">Nomura CTA trigger levels pulled</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="c2" onchange="updateScore()"><label for="c2">20D / 50D MA overlay checked</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="c3" onchange="updateScore()"><label for="c3">Realized vol trend identified</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="c4" onchange="updateScore()"><label for="c4">CTA buy/sell trigger levels marked</label></div>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;border-radius:2px;">
+            <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:8px;">Data sources</div>
+            <a href="https://twitter.com/search?q=Nomura+CTA" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;margin-bottom:6px;text-decoration:none;border:1px solid var(--tos-border);">↗ X/Twitter — Nomura CTA levels</a>
+            <a href="https://unusualwhales.com/market/vix" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;margin-bottom:6px;text-decoration:none;border:1px solid var(--tos-border);">↗ VIX / Realized Vol — UW</a>
+            <a href="https://www.cboe.com/tradable_products/vix/" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;text-decoration:none;border:1px solid var(--tos-border);">↗ CBOE VIX Term Structure</a>
+          </div>
+        </div>
+
+        <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;border-radius:2px;margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:6px;">Your notes — CTA trigger levels</div>
+          <textarea id="cta-notes" style="width:100%;background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-text);font-family:var(--font-data);font-size:11px;padding:8px;height:70px;resize:none;outline:none;" placeholder="e.g. Nomura CTA buy trigger SPX 5180. Realized vol falling — CTAs adding risk. If SPX breaks 5100 expect systematic selling of ~$40B..."></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">CTA posture</div>
+            <select id="cta-posture" onchange="updateScore()" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-text);font-family:var(--font-ui);font-size:11px;padding:4px;width:100%;">
+              <option value="">-- Select --</option>
+              <option value="adding">Adding risk (vol falling)</option>
+              <option value="reducing">De-risking (vol rising)</option>
+              <option value="neutral">Neutral / unclear</option>
+            </select>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">CTA buy trigger</div>
+            <input type="text" id="cta-buy" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-green);font-family:var(--font-data);font-size:13px;padding:4px;width:100%;text-align:center;" placeholder="SPX level" />
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">CTA sell trigger</div>
+            <input type="text" id="cta-sell" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-red);font-family:var(--font-data);font-size:13px;padding:4px;width:100%;text-align:center;" placeholder="SPX level" />
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: MACRO LIQUIDITY -->
+      <div class="ff-panel" id="ff-panel-2" style="padding:16px;display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="background:#1a2a2a;border:1px solid var(--tos-cyan);padding:4px 10px;font-size:11px;color:var(--tos-cyan);font-weight:bold;border-radius:2px;">14–30 DAYS</div>
+          <div style="font-size:12px;color:var(--tos-text2);">Will the flow regime stay risk-on, or crack under the surface?</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;">
+            <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:8px;">Macro checklist</div>
+            <div class="ff-check-item"><input type="checkbox" id="m1" onchange="updateScore()"><label for="m1">China loan data / PBOC liquidity checked</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="m2" onchange="updateScore()"><label for="m2">Japan JGB yields / FX intervention checked</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="m3" onchange="updateScore()"><label for="m3">UST auction results reviewed</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="m4" onchange="updateScore()"><label for="m4">USDJPY / CNH / EURUSD checked</label></div>
+            <div class="ff-check-item"><input type="checkbox" id="m5" onchange="updateScore()"><label for="m5">Corporate credit stress signals clear</label></div>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;">
+            <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:8px;">Data sources</div>
+            <a href="https://www.tradingeconomics.com/china/loans" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;margin-bottom:5px;text-decoration:none;border:1px solid var(--tos-border);">↗ China Loan Data</a>
+            <a href="https://www.tradingview.com/symbols/TVC-JP10Y/" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;margin-bottom:5px;text-decoration:none;border:1px solid var(--tos-border);">↗ Japan 10Y JGB Yield</a>
+            <a href="https://home.treasury.gov/data/treasury-bulletin" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;margin-bottom:5px;text-decoration:none;border:1px solid var(--tos-border);">↗ UST Auction Results</a>
+            <a href="https://www.tradingview.com/symbols/FX-USDJPY/" target="_blank" style="display:block;padding:6px 8px;background:var(--tos-bg4);color:var(--tos-blue);font-size:11px;text-decoration:none;border:1px solid var(--tos-border);">↗ USDJPY / FX Crosses</a>
+          </div>
+        </div>
+
+        <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:6px;">Your notes — macro liquidity backdrop</div>
+          <textarea id="macro-notes" style="width:100%;background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-text);font-family:var(--font-data);font-size:11px;padding:8px;height:70px;resize:none;outline:none;" placeholder="e.g. PBOC injected 400B CNY this week — risk-on supportive. USDJPY at 152 — intervention risk rising. UST 10Y auction went poorly — watch credit spreads..."></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">Liquidity regime</div>
+            <select id="liquidity-regime" onchange="updateScore()" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-text);font-family:var(--font-ui);font-size:11px;padding:4px;width:100%;">
+              <option value="">-- Select --</option>
+              <option value="expanding">Expanding (risk-on)</option>
+              <option value="contracting">Contracting (risk-off)</option>
+              <option value="neutral">Neutral / mixed</option>
+            </select>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;">Biggest macro risk this week</div>
+            <input type="text" id="macro-risk" style="background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-red);font-family:var(--font-data);font-size:11px;padding:4px;width:100%;text-align:center;" placeholder="e.g. USDJPY intervention, UST auction" />
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: SCORECARD -->
+      <div class="ff-panel" id="ff-panel-3" style="padding:16px;display:none;">
+        <div style="font-size:11px;color:var(--tos-text2);margin-bottom:12px;">Complete Steps 1–3 first. This scorecard synthesizes your inputs into a weekly bias and go/no-go signal for the scanner.</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:4px;">DEALER GAMMA</div>
+            <div style="font-size:18px;font-weight:bold;font-family:var(--font-data);" id="sc-dealer">—</div>
+            <div style="font-size:10px;color:var(--tos-text3);margin-top:2px;" id="sc-dealer-sub">complete step 1</div>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:4px;">CTA POSTURE</div>
+            <div style="font-size:18px;font-weight:bold;font-family:var(--font-data);" id="sc-cta">—</div>
+            <div style="font-size:10px;color:var(--tos-text3);margin-top:2px;" id="sc-cta-sub">complete step 2</div>
+          </div>
+          <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;text-align:center;">
+            <div style="font-size:10px;color:var(--tos-text3);margin-bottom:4px;">MACRO LIQUIDITY</div>
+            <div style="font-size:18px;font-weight:bold;font-family:var(--font-data);" id="sc-macro">—</div>
+            <div style="font-size:10px;color:var(--tos-text3);margin-top:2px;" id="sc-macro-sub">complete step 3</div>
+          </div>
+        </div>
+
+        <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:14px;margin-bottom:12px;text-align:center;">
+          <div style="font-size:10px;color:var(--tos-text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Weekly Bias</div>
+          <div style="font-size:24px;font-weight:bold;font-family:var(--font-data);" id="sc-bias">—</div>
+          <div style="font-size:11px;color:var(--tos-text2);margin-top:6px;" id="sc-bias-detail">Fill in all three steps to generate your weekly bias</div>
+        </div>
+
+        <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:12px;margin-bottom:12px;">
+          <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:8px;">Scanner alignment — flow-first mindset</div>
+          <div style="font-size:11px;color:#80cc80;line-height:1.8;font-family:var(--font-data);">
+            Flows dictate setups. Charts confirm flows.<br>
+            Map dealer + CTA flows first → then overlay macro liquidity → then scan.
+          </div>
+        </div>
+
+        <div style="background:var(--tos-bg3);border:1px solid var(--tos-border);padding:10px;">
+          <div style="font-size:10px;color:var(--tos-text3);text-transform:uppercase;margin-bottom:6px;">Weekly notes summary</div>
+          <textarea id="weekly-summary" style="width:100%;background:var(--tos-bg4);border:1px solid var(--tos-border);color:var(--tos-text);font-family:var(--font-data);font-size:11px;padding:8px;height:80px;resize:none;outline:none;" placeholder="Synthesize your week here — dealer regime, CTA triggers, macro backdrop, and your trading plan..."></textarea>
+        </div>
+      </div>
+
+    </div>
+    <div class="overlay-footer">
+      <button class="tos-btn" onclick="clearFFSetup()">Clear</button>
+      <button class="tos-btn" onclick="saveFFSetup()">Save notes</button>
+      <button class="tos-btn tos-btn-primary" onclick="document.getElementById('flowfirst-overlay').classList.remove('open');document.getElementById('scan-btn').click();">SAVE &amp; RUN SCAN ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO USE OVERLAY -->
+<div class="overlay" id="howto-overlay">
+  <div class="overlay-panel" style="width:600px;">
+    <div class="overlay-titlebar">
+      HOW TO USE — SCHWAB API SETUP GUIDE
+      <button class="close-btn" onclick="document.getElementById('howto-overlay').classList.remove('open')">✕ CLOSE</button>
+    </div>
+    <div class="overlay-body">
+      <div class="warn-box">Schwab access tokens expire every 30 minutes. Refresh tokens last 7 days. You will need to refresh your token roughly once per week. The scanner will show an error in the log when your token expires.</div>
+      <div class="howto-step"><div class="step-num">1</div><div class="step-body"><h4>Create a Schwab developer account</h4><p>Go to <code>developer.schwab.com</code> and sign in with your regular Schwab brokerage account. Accept the developer agreement.</p></div></div>
+      <div class="howto-step"><div class="step-num">2</div><div class="step-body"><h4>Create a new app</h4><p>Click "My Apps" → "Create App." Name it anything (e.g. PetroAI Scanner). Set the callback URL to exactly: <code>https://127.0.0.1</code> — must match exactly.</p></div></div>
+      <div class="howto-step"><div class="step-num">3</div><div class="step-body"><h4>Copy your App Key and Secret</h4><p>After creating the app you get your App Key (Client ID) and App Secret. Paste both into Settings above. Treat these like passwords.</p></div></div>
+      <div class="howto-step"><div class="step-num">4</div><div class="step-body"><h4>Authorize and get your access token</h4><p>In a new browser tab, paste this URL replacing YOUR_KEY with your App Key:<br/><code>https://api.schwabapi.com/v1/oauth/authorize?client_id=YOUR_KEY&redirect_uri=https://127.0.0.1&response_type=code&scope=readonly</code><br/>Log in when prompted. You'll land on a broken page — that's normal. Copy the full URL from the address bar. It contains <code>code=XXXXXX</code>. That code is temporary — use it within 30 seconds.</p></div></div>
+      <div class="howto-step"><div class="step-num">5</div><div class="step-body"><h4>Exchange the code for a token (use Postman)</h4><p>Download Postman (free at postman.com). Create a POST request to: <code>https://api.schwabapi.com/v1/oauth/token</code> with your App Key, Secret, and the code. You'll receive an <code>access_token</code>. Paste that into Settings → Access Token field.</p></div></div>
+      <div class="howto-step"><div class="step-num">6</div><div class="step-body"><h4>Save and test</h4><p>In Settings, click "Save & Apply" then "Test Connection." You should see a green LED and "API: Connected" in the top bar. You're live.</p></div></div>
+      <div class="howto-step"><div class="step-num">7</div><div class="step-body"><h4>Run your first scan</h4><p>Click RUN SCAN. The scanner loops through all PetroAI tickers, fetches the options chain for Friday's expiration, and flags any strikes with unusual volume-to-open-interest ratios. Green rows = hot alerts. Amber = watch.</p></div></div>
+      <div class="howto-step"><div class="step-num">8</div><div class="step-body"><h4>Reading the alerts</h4><p>Green border = Vol/OI above 10x — highest priority. SWEEP = one large aggressive order. ACCUM = volume building over multiple prints. Always verify the setup on your chart before entering. Max $50–$100 premium per contract.</p></div></div>
+    </div>
+    <div class="overlay-footer">
+      <button class="tos-btn tos-btn-primary" onclick="document.getElementById('howto-overlay').classList.remove('open')">GOT IT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const UNIVERSE = [
+  // ── COPPER / MATERIALS (live now) ──
+  { sym:'FCX',  name:'Freeport-McMoRan',  layer:'Copper',     color:'#00c176', phase:'live' },
+  { sym:'SCCO', name:'Southern Copper',   layer:'Copper',     color:'#00c176', phase:'live' },
+  { sym:'TECK', name:'Teck Resources',    layer:'Copper',     color:'#00c176', phase:'live' },
+  { sym:'COPX', name:'Copper ETF',        layer:'Copper ETF', color:'#00c176', phase:'live' },
+  // ── URANIUM (live now) ──
+  { sym:'CCJ',  name:'Cameco',            layer:'Uranium',    color:'#00c176', phase:'live' },
+  { sym:'UEC',  name:'Uranium Energy',    layer:'Uranium',    color:'#00c176', phase:'live' },
+  { sym:'URA',  name:'Uranium ETF',       layer:'Uranium ETF',color:'#00c176', phase:'live' },
+  { sym:'DNN',  name:'Denison Mines',     layer:'Uranium',    color:'#00c176', phase:'live' },
+  { sym:'UUUU', name:'Energy Fuels',      layer:'Uranium',    color:'#00c176', phase:'live' },
+  { sym:'EU',   name:'enCore Energy',     layer:'Uranium',    color:'#00c176', phase:'live' },
+  // ── SMALL MODULAR REACTORS (live now) ──
+  { sym:'OKLO', name:'Oklo Inc',          layer:'SMR',        color:'#ffaa00', phase:'live' },
+  { sym:'SMR',  name:'NuScale Power',     layer:'SMR',        color:'#ffaa00', phase:'live' },
+  { sym:'NNE',  name:'Nano Nuclear',      layer:'SMR',        color:'#ffaa00', phase:'live' },
+  // ── POWER / ENERGY (live now) ──
+  { sym:'CEG',  name:'Constellation Egy', layer:'Power',      color:'#00c176', phase:'live' },
+  { sym:'VST',  name:'Vistra Energy',     layer:'Power',      color:'#00c176', phase:'live' },
+  { sym:'NEE',  name:'NextEra Energy',    layer:'Power',      color:'#00c176', phase:'live' },
+  { sym:'ETR',  name:'Entergy',           layer:'Power',      color:'#00c176', phase:'live' },
+  { sym:'SO',   name:'Southern Company',  layer:'Power',      color:'#00c176', phase:'live' },
+  { sym:'EXC',  name:'Exelon',            layer:'Power',      color:'#00c176', phase:'live' },
+  // ── GRID / DATA INFRASTRUCTURE (queuing) ──
+  { sym:'VRT',  name:'Vertiv Holdings',   layer:'Grid Infra', color:'#4a9eff', phase:'next' },
+  { sym:'PWR',  name:'Quanta Services',   layer:'Grid Infra', color:'#4a9eff', phase:'next' },
+  { sym:'GLW',  name:'Corning',           layer:'Grid Infra', color:'#4a9eff', phase:'next' },
+  { sym:'EATON',name:'Eaton Corp',        layer:'Grid Infra', color:'#4a9eff', phase:'next' },
+  { sym:'GEV',  name:'GE Vernova',        layer:'Grid Infra', color:'#4a9eff', phase:'next' },
+  { sym:'HUBB', name:'Hubbell',           layer:'Grid Infra', color:'#4a9eff', phase:'next' },
+  { sym:'AMSC', name:'Amer Superconductor',layer:'Grid Infra',color:'#4a9eff', phase:'next' },
+  // ── DEFENSE / SOVEREIGNTY (later) ──
+  { sym:'KTOS', name:'Kratos Defense',    layer:'Defense',    color:'#9b6dff', phase:'later' },
+  { sym:'AXON', name:'Axon Enterprise',   layer:'Defense',    color:'#9b6dff', phase:'later' },
+  { sym:'PLTR', name:'Palantir',          layer:'Defense',    color:'#9b6dff', phase:'later' },
+  { sym:'RCAT', name:'Red Cat Holdings',  layer:'Defense',    color:'#9b6dff', phase:'later' },
+  { sym:'FIG',  name:'Figma',              layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  // ── QUANTUM / FRONTIER (later) ──
+  { sym:'IONQ', name:'IonQ',             layer:'Quantum',    color:'#ff4444', phase:'later' },
+  { sym:'RGTI', name:'Rigetti Computing', layer:'Quantum',    color:'#ff4444', phase:'later' },
+  { sym:'QUBT', name:'Quantum Computing', layer:'Quantum',    color:'#ff4444', phase:'later' },
+  { sym:'QBTS', name:'D-Wave Quantum',    layer:'Quantum',    color:'#ff4444', phase:'later' },
+  { sym:'ARQQ', name:'Arqit Quantum',     layer:'Quantum',    color:'#ff4444', phase:'later' },
+  // ── AI DEMAND — HYPERSCALERS (AI capex, infrastructure, partnerships) ──
+  { sym:'META',  name:'Meta Platforms',   layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'MSFT',  name:'Microsoft',        layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'GOOGL', name:'Alphabet',         layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'AMZN',  name:'Amazon',           layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'NVDA',  name:'Nvidia',           layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'ORCL',  name:'Oracle',           layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'AMD',   name:'AMD',              layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'TSLA',  name:'Tesla',            layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+  { sym:'AAPL',  name:'Apple',            layer:'AI Demand',  color:'#00d4d4', phase:'hyper' },
+];
+
+let cfg = {}, thr = { ratio:3, iv:50, prem:50, dmin:0.01, dmax:0.40, interval:15, minDollar:500000, maxDte:14 };
+let alerts = [], scanTimer = null, selectedRow = -1, currentFilter = 'all';
+
+function loadSavedToken() {
+  const token = localStorage.getItem('petroai_schwab_token');
+  if (token) {
+    document.getElementById('cfg-token').value = token;
+    log('Token loaded from Token Helper storage.', 'ok');
+    alert('Token loaded. Click Save & Apply then Test Connection.');
+  } else {
+    alert('No saved token found. Open the Token Helper file first and complete the authorization flow.');
+  }
+}
+
+  try {
+    const c = localStorage.getItem('petroai_cfg'); if(c) cfg = JSON.parse(c);
+    const t = localStorage.getItem('petroai_thr'); if(t) thr = JSON.parse(t);
+    if(cfg.key)    document.getElementById('cfg-key').value    = cfg.key;
+    if(cfg.secret) document.getElementById('cfg-secret').value = cfg.secret;
+    if(cfg.token)  document.getElementById('cfg-token').value  = cfg.token;
+    if(cfg.refresh) document.getElementById('cfg-refresh').value = cfg.refresh;
+  } catch(e){}
+}
+
+function saveAll() {
+  cfg = { key: document.getElementById('cfg-key').value.trim(), secret: document.getElementById('cfg-secret').value.trim(), token: document.getElementById('cfg-token').value.trim(), refresh: document.getElementById('cfg-refresh').value.trim() };
+  thr = { ratio: +document.getElementById('thr-ratio').value, iv: +document.getElementById('thr-iv').value, prem: +document.getElementById('thr-prem').value, dmin: parseFloat('0.0'+document.getElementById('thr-dmin').value), dmax: parseFloat('0.'+document.getElementById('thr-dmax').value), interval: +document.getElementById('thr-interval').value, minDollar: +document.getElementById('thr-dollar').value, maxDte: +document.getElementById('thr-dte').value };
+  localStorage.setItem('petroai_cfg', JSON.stringify(cfg));
+  localStorage.setItem('petroai_thr', JSON.stringify(thr));
+  log('Settings saved. Auto-refresh enabled.', 'ok');
+  startAutoScan(); startTokenRefresh(); closeSettings();
+}
+
+async function refreshToken() {
+  if(!cfg.refresh||!cfg.key||!cfg.secret){log('No refresh token stored','warn');return false;}
+  log('Auto-refreshing access token...','info');
+  try {
+    const creds = btoa(cfg.key+':'+cfg.secret);
+    const r = await fetch('https://api.schwabapi.com/v1/oauth/token',{method:'POST',headers:{'Authorization':'Basic '+creds,'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(cfg.refresh)});
+    const data = await r.json();
+    if(data.access_token){
+      cfg.token=data.access_token;
+      if(data.refresh_token) cfg.refresh=data.refresh_token;
+      localStorage.setItem('petroai_cfg',JSON.stringify(cfg));
+      document.getElementById('cfg-token').value=cfg.token;
+      document.getElementById('cfg-refresh').value=cfg.refresh||'';
+      document.getElementById('api-led').classList.add('on');
+      document.getElementById('api-status-txt').textContent='API: Token auto-refreshed';
+      log('Token auto-refreshed — valid 30 min','ok');
+      return true;
+    } else { log('Auto-refresh failed: '+(data.error_description||data.error),'err'); return false; }
+  } catch(e){log('Auto-refresh error: '+e.message,'err');return false;}
+}
+
+let refreshTimer=null;
+function startTokenRefresh(){ clearInterval(refreshTimer); if(cfg.refresh) refreshTimer=setInterval(()=>refreshToken(),28*60*1000); }
+
+function openSettings() { document.getElementById('settings-overlay').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); }
+function openHowTo() { document.getElementById('howto-overlay').classList.add('open'); }
+function setView(v) { document.querySelectorAll('.menu-btn').forEach((b,i)=>b.classList.toggle('active',['scanner','watchlist'][i]===v)); }
+
+function log(msg, type) {
+  const body = document.getElementById('log-body');
+  const now = new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const cls = type==='ok'?'log-ok':type==='warn'?'log-warn':type==='err'?'log-err':type==='info'?'log-info':'';
+  const el = document.createElement('div'); el.className='log-entry';
+  el.innerHTML=`<span class="log-time">${now}</span><span class="${cls}">${msg}</span>`;
+  body.insertBefore(el, body.firstChild);
+  if(body.children.length>100) body.removeChild(body.lastChild);
+}
+
+function isMarketHours() {
+  const et = new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const d=et.getDay(), m=et.getHours()*60+et.getMinutes();
+  return d>=1&&d<=5&&m>=570&&m<=960;
+}
+
+function updateClock() {
+  const et = new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+  document.getElementById('clock-txt').textContent = et.toLocaleTimeString('en-US',{hour12:false})+' ET';
+  const mh = isMarketHours();
+  document.getElementById('mkt-led').className = 'status-led'+(mh?' on':' warn');
+  document.getElementById('mkt-status-txt').textContent = mh?'Market: OPEN':'Market: CLOSED';
+}
+
+function startAutoScan() {
+  clearInterval(scanTimer);
+  scanTimer = setInterval(()=>{ if(isMarketHours()) runScan(); }, thr.interval*60*1000);
+  document.getElementById('m-nextcan').textContent = 'auto every '+thr.interval+'min';
+}
+
+async function testConn() {
+  if(!cfg.token){log('No token — save credentials first','err');return;}
+  log('Testing Schwab API...','info');
+  try {
+    const r = await fetch('https://api.schwabapi.com/marketdata/v1/quotes?symbols=SPY&fields=quote',{headers:{'Authorization':'Bearer '+cfg.token,'Accept':'application/json'}});
+    if(r.ok){
+      document.getElementById('api-led').classList.add('on');
+      document.getElementById('api-status-txt').textContent='API: Connected';
+      log('Schwab API connection successful','ok');
+    } else { log('API error '+r.status+' — check your token','err'); }
+  } catch(e){ log('Connection failed: '+e.message,'err'); }
+}
+
+function getNextFriday() {
+  const d=new Date(), day=d.getDay();
+  const diff=day<=5?(5-day===0?7:5-day):6;
+  d.setDate(d.getDate()+diff);
+  return d.toISOString().split('T')[0];
+}
+
+async function fetchChain(sym, exp) {
+  if(!cfg.token) return null;
+  try {
+    const url=`https://api.schwabapi.com/marketdata/v1/chains?symbol=${sym}&contractType=CALL&strikeCount=20&includeUnderlyingQuote=true&toDate=${exp}&fromDate=${exp}`;
+    const r=await fetch(url,{headers:{'Authorization':'Bearer '+cfg.token,'Accept':'application/json'}});
+    if(!r.ok){log(sym+' chain error '+r.status,'warn');return null;}
+    return await r.json();
+  }catch(e){log(sym+' error: '+e.message,'err');return null;}
+}
+
+function parseChain(sym, data) {
+  if(!data?.callExpDateMap) return [];
+  const out=[], info=UNIVERSE.find(t=>t.sym===sym)||{layer:'Unknown',color:'#666'};
+  const today=new Date();
+  for(const [expKey,strikes] of Object.entries(data.callExpDateMap)) {
+    // DTE filter — weekly only (0-7 days)
+    const expDate=new Date(expKey.split(':')[0]);
+    const dte=Math.round((expDate-today)/(1000*60*60*24));
+    if(dte<0||dte>thr.maxDte) continue;
+    for(const [strikeStr,contracts] of Object.entries(strikes)) {
+      const c=contracts[0]; if(!c) continue;
+      const delta=Math.abs(c.delta||0);
+      const volume=c.totalVolume||0;
+      const oi=Math.max(c.openInterest||1,1);
+      const ask=c.ask||0;
+      const bid=c.bid||0;
+      const midpoint=(ask+bid)/2||ask;
+      const ratio=volume/oi;
+      // Total dollar value = midpoint price × volume × 100 shares per contract
+      const dollarValue=midpoint*volume*100;
+      if(delta<thr.dmin||delta>thr.dmax) continue;
+      if(ask>thr.prem) continue;
+      if(ratio<thr.ratio) continue;
+      // PRIMARY FILTER — minimum dollar value
+      if(dollarValue<thr.minDollar) continue;
+      let signal='watch', alertClass='cold';
+      const isPennySweep = ask<=0.10 && dollarValue>=500000;
+      if(isPennySweep && dollarValue>=1000000){signal='penny_sweep';alertClass='hot';}
+      else if(isPennySweep){signal='penny_sweep';alertClass='warm';}
+      else if(dollarValue>=2000000){signal='sweep';alertClass='hot';}
+      else if(dollarValue>=1000000){signal='accum';alertClass='warm';}
+      else if(dollarValue>=500000){signal='watch';alertClass='cold';}
+      out.push({ sym, strike:parseFloat(strikeStr).toFixed(2), exp:expKey.split(':')[0], dte, type:'CALL', volume, oi, ratio:ratio.toFixed(1), prem:ask.toFixed(2), delta:delta.toFixed(2), ivRank:(data.volatility||50).toFixed(0), signal, alertClass, layer:info.layer, layerColor:info.color, dollarValue, isPennySweep });
+    }
+  }
+  return out.sort((a,b)=>b.dollarValue-a.dollarValue);
+}
+
+async function runScan() {
+  if(!cfg.token){log('No API token. Open Settings and add your Schwab credentials.','err');openSettings();return;}
+  const btn=document.getElementById('scan-btn'); btn.disabled=true; btn.textContent='⟳ SCANNING...';
+  alerts=[]; selectedRow=-1;
+  document.getElementById('api-led').classList.add('on');
+  document.getElementById('api-status-txt').textContent='API: Scanning...';
+  const exp=getNextFriday();
+  log('Scan started — '+UNIVERSE.length+' tickers, expiry '+exp,'info');
+  setWLStatus(null,'scanning');
+  let scanned=0;
+  for(const t of UNIVERSE) {
+    setWLStatus(t.sym,'scanning');
+    log('Fetching '+t.sym+'...','');
+    const data=await fetchChain(t.sym,exp);
+    if(data){
+      const found=parseChain(t.sym,data);
+      alerts=alerts.concat(found);
+      scanned++;
+      if(found.length>0){log(t.sym+': '+found.length+' alert(s) — top '+found[0].ratio+'x','ok');setWLStatus(t.sym,'flagged');}
+      else{log(t.sym+': clean','');setWLStatus(t.sym,'clean');}
+    } else { setWLStatus(t.sym,'clean'); }
+    await new Promise(r=>setTimeout(r,250));
+  }
+  renderGrid(alerts);
+  const sweeps=alerts.filter(a=>a.signal==='sweep').length;
+  const pennySweeps=alerts.filter(a=>a.isPennySweep).length;
+  document.getElementById('m-scanned').textContent=scanned;
+  document.getElementById('m-alerts').textContent=alerts.length;
+  document.getElementById('m-sweeps').textContent=sweeps;
+  document.getElementById('m-penny').textContent=pennySweeps;
+  if(alerts.length>0){document.getElementById('m-top').textContent=alerts[0].sym;document.getElementById('m-top-sub').textContent=alerts[0].ratio+'x ratio';}
+  const now=new Date().toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('m-lastscan').textContent=now;
+  document.getElementById('api-status-txt').textContent='API: Connected';
+  log('Scan complete — '+alerts.length+' alerts across '+scanned+' tickers','ok');
+  btn.disabled=false; btn.textContent='▶ RUN SCAN';
+}
+
+function setWLStatus(sym, state) {
+  document.querySelectorAll('.wl-row').forEach(row=>{
+    const s=row.dataset.sym;
+    if(sym===null||s===sym){
+      row.className='wl-row'+(state==='flagged'?' flagged':state==='scanning'?' scanning':'');
+      const fl=row.querySelector('.wl-flag');
+      if(fl){fl.textContent=state==='flagged'?'⚑':state==='scanning'?'●':'';}
+    }
+  });
+}
+
+function applyFilter(f, btn) {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid(alerts);
+}
+
+function renderGrid(data) {
+  let filtered=data;
+  if(currentFilter==='sweep') filtered=data.filter(a=>a.signal==='sweep');
+  else if(currentFilter==='accum') filtered=data.filter(a=>a.signal==='accum');
+  else if(currentFilter==='call') filtered=data.filter(a=>a.type==='CALL');
+  else if(currentFilter==='hot') filtered=data.filter(a=>a.alertClass==='hot');
+  else if(currentFilter==='penny_sweep') filtered=data.filter(a=>a.isPennySweep);
+  document.getElementById('alert-count-txt').textContent=filtered.length+' alerts';
+  const body=document.getElementById('grid-body');
+  if(filtered.length===0){
+    body.innerHTML='<div class="empty-grid"><div class="big">'+(data.length===0?'No scan data':'No alerts match filter')+'</div><div>'+(data.length===0?'Click RUN SCAN to start':'Try ALL filter or run a new scan')+'</div></div>';
+    return;
+  }
+  body.innerHTML=filtered.map((a,i)=>{
+    const rc=parseFloat(a.ratio)>=10?'ratio-hot':parseFloat(a.ratio)>=5?'ratio-warm':'ratio-cool';
+    const sc=a.signal==='penny_sweep'?'sig-penny':a.signal==='sweep'?'sig-sweep':a.signal==='accum'?'sig-accum':'sig-watch';
+    const dv=a.dollarValue||0;
+    const dvFmt=dv>=1000000?'$'+(dv/1000000).toFixed(2)+'M':'$'+(dv/1000).toFixed(0)+'K';
+    const dvClass=dv>=2000000?'ratio-hot':dv>=1000000?'ratio-warm':'ratio-cool';
+    return `<div class="grid-row ${a.alertClass}" data-idx="${i}" onclick="selectRow(this,${i})">
+      <span class="cell-ticker">${a.sym}</span>
+      <span class="cell-strike">$${a.strike} ${a.exp}</span>
+      <span><span class="cell-type type-c">${a.type}</span></span>
+      <span class="cell-vol ${dvClass}" style="font-weight:bold;">${dvFmt}</span>
+      <span class="cell-ratio ${rc}">${a.ratio}x</span>
+      <span class="cell-prem">$${a.prem}</span>
+      <span class="cell-delta">${a.dte||0}d</span>
+      <span class="cell-signal ${sc}">${a.signal==='penny_sweep'?'⚡ PENNY':a.signal.toUpperCase()}</span>
+      <span class="cell-layer" style="color:${a.layerColor};">◆ ${a.layer}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectRow(el, i) {
+  document.querySelectorAll('.grid-row').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+  const a=alerts.filter(x=>currentFilter==='all'||x.signal===currentFilter||x.type===currentFilter||x.alertClass==='hot')[i]||alerts[i];
+  if(!a) return;
+  const dv=a.dollarValue||0;
+  const dvFmt=dv>=1000000?'$'+(dv/1000000).toFixed(2)+'M':'$'+(dv/1000).toFixed(0)+'K';
+  document.getElementById('d-sym').textContent=a.sym;
+  document.getElementById('d-sym').style.color=a.layerColor;
+  document.getElementById('d-strike').textContent='$'+a.strike+' CALL';
+  document.getElementById('d-exp').textContent=a.exp+' ('+(a.dte||0)+' days)';
+  document.getElementById('d-type').textContent=a.type;
+  document.getElementById('d-vol').textContent=dvFmt+' total premium';
+  document.getElementById('d-vol').style.color=dv>=1000000?'var(--tos-green)':'var(--tos-amber)';
+  document.getElementById('d-oi').textContent=a.volume.toLocaleString()+' contracts';
+  document.getElementById('d-ratio').textContent=a.ratio+'x vol/OI';
+  document.getElementById('d-prem').textContent='$'+a.prem+' ask';
+  document.getElementById('d-delta').textContent=a.delta;
+  document.getElementById('d-iv').textContent=a.ivRank+'%';
+  document.getElementById('d-signal').textContent=a.signal.toUpperCase();
+  document.getElementById('d-signal').style.color=a.signal==='sweep'?'var(--tos-green)':'var(--tos-amber)';
+  document.getElementById('d-layer').textContent=a.layer;
+  document.getElementById('d-layer').style.color=a.layerColor;
+  document.getElementById('d-nextstep').textContent=a.isPennySweep?'⚡ PENNY SWEEP — sub-$0.10 options with massive dollar value. This is the META $0.02→$8.10 pattern. Check for imminent catalyst immediately.':dv>=1000000?'INSTITUTIONAL SIZE — check '+a.sym+' for news, earnings, product releases. This is real money with conviction.':dv>=500000?'Large flow — verify chart setup and catalyst. Strong signal.':'Moderate flow — use as directional confirmation only.';
+}
+
+function buildWatchlist() {
+  const phases=['live','next','later','hyper'];
+  const labels={live:'◆ ACTIVE NOW',next:'◇ QUEUING UP',later:'◇ LATER CYCLE',hyper:'◆ AI HYPERSCALERS'};
+  const tbl=document.getElementById('wl-table');
+  tbl.innerHTML='<div class="wl-header"><span>Symbol</span><span style="text-align:right">Alert</span></div>';
+  phases.forEach(phase=>{
+    const items=UNIVERSE.filter(t=>t.phase===phase);
+    if(!items.length) return;
+    const sec=document.createElement('div'); sec.className='wl-section'; sec.textContent=labels[phase];
+    tbl.appendChild(sec);
+    items.forEach(t=>{
+      const row=document.createElement('div'); row.className='wl-row'; row.dataset.sym=t.sym;
+      row.innerHTML=`<div><div class="wl-sym"><span class="wl-layer-dot" style="background:${t.color};"></span>${t.sym}</div><div class="wl-sub">${t.name}</div></div><div class="wl-status-col"><span class="wl-flag"></span></div>`;
+      tbl.appendChild(row);
+    });
+  });
+  document.getElementById('wl-count').textContent=UNIVERSE.length+' symbols';
+}
+
+function openFlowFirst() { document.getElementById('flowfirst-overlay').classList.add('open'); loadFFSetup(); updateScore(); }
+
+function showFFTab(n) {
+  document.querySelectorAll('.ff-panel').forEach((p,i)=>p.style.display=i===n?'block':'none');
+  document.querySelectorAll('.ff-tab').forEach((t,i)=>{
+    t.style.background=i===n?'var(--tos-accent)':'transparent';
+    t.style.borderBottom=i===n?'2px solid var(--tos-green)':'2px solid transparent';
+    t.style.color=i===n?'var(--tos-green)':'var(--tos-text2)';
+  });
+}
+
+function updateScore() {
+  const dealer = document.getElementById('dealer-regime').value;
+  const cta = document.getElementById('cta-posture').value;
+  const liq = document.getElementById('liquidity-regime').value;
+
+  const dEl=document.getElementById('sc-dealer'), dSub=document.getElementById('sc-dealer-sub');
+  const cEl=document.getElementById('sc-cta'), cSub=document.getElementById('sc-cta-sub');
+  const mEl=document.getElementById('sc-macro'), mSub=document.getElementById('sc-macro-sub');
+
+  if(dealer==='long'){dEl.textContent='PINNING';dEl.style.color='var(--tos-amber)';dSub.textContent='mean reversion favored';}
+  else if(dealer==='short'){dEl.textContent='CHASING';dEl.style.color='var(--tos-green)';dSub.textContent='momentum plays favored';}
+  else if(dealer==='mixed'){dEl.textContent='MIXED';dEl.style.color='var(--tos-text2)';dSub.textContent='wait for clarity';}
+
+  if(cta==='adding'){cEl.textContent='RISK-ON';cEl.style.color='var(--tos-green)';cSub.textContent='CTAs buying dips';}
+  else if(cta==='reducing'){cEl.textContent='RISK-OFF';cEl.style.color='var(--tos-red)';cSub.textContent='CTAs selling rallies';}
+  else if(cta==='neutral'){cEl.textContent='NEUTRAL';cEl.style.color='var(--tos-text2)';cSub.textContent='no clear trigger';}
+
+  if(liq==='expanding'){mEl.textContent='EXPANDING';mEl.style.color='var(--tos-green)';mSub.textContent='risk-on supportive';}
+  else if(liq==='contracting'){mEl.textContent='CONTRACTING';mEl.style.color='var(--tos-red)';mSub.textContent='risk-off pressure';}
+  else if(liq==='neutral'){mEl.textContent='NEUTRAL';mEl.style.color='var(--tos-text2)';mSub.textContent='mixed signals';}
+
+  const biasEl=document.getElementById('sc-bias');
+  const biasDetail=document.getElementById('sc-bias-detail');
+
+  const bullish = [dealer==='short',cta==='adding',liq==='expanding'].filter(Boolean).length;
+  const bearish = [dealer==='long',cta==='reducing',liq==='contracting'].filter(Boolean).length;
+
+  if(bullish===3){biasEl.textContent='STRONG BULL';biasEl.style.color='var(--tos-green)';biasDetail.textContent='All three layers aligned bullish — flow scanner signals carry high conviction this week.';}
+  else if(bullish===2&&bearish===0){biasEl.textContent='BULLISH';biasEl.style.color='var(--tos-green)';biasDetail.textContent='Two of three layers bullish — favor long flow setups. Manage risk on extended moves.';}
+  else if(bearish===3){biasEl.textContent='STRONG BEAR';biasEl.style.color='var(--tos-red)';biasDetail.textContent='All three layers bearish — be very selective on call flow signals this week.';}
+  else if(bearish===2&&bullish===0){biasEl.textContent='BEARISH';biasEl.style.color='var(--tos-red)';biasDetail.textContent='Two of three layers bearish — reduce size on call plays, favor put flow signals.';}
+  else if(dealer||cta||liq){biasEl.textContent='MIXED';biasEl.style.color='var(--tos-amber)';biasDetail.textContent='Conflicting signals — wait for flow confirmation before sizing in. Use scanner alerts as primary signal.';}
+  else{biasEl.textContent='—';biasEl.style.color='var(--tos-text3)';biasDetail.textContent='Fill in all three steps to generate your weekly bias';}
+}
+
+function saveFFSetup() {
+  const data = {
+    g1:document.getElementById('g1').checked, g2:document.getElementById('g2').checked,
+    g3:document.getElementById('g3').checked, g4:document.getElementById('g4').checked,
+    g5:document.getElementById('g5').checked,
+    c1:document.getElementById('c1').checked, c2:document.getElementById('c2').checked,
+    c3:document.getElementById('c3').checked, c4:document.getElementById('c4').checked,
+    m1:document.getElementById('m1').checked, m2:document.getElementById('m2').checked,
+    m3:document.getElementById('m3').checked, m4:document.getElementById('m4').checked,
+    m5:document.getElementById('m5').checked,
+    gammaNotes:document.getElementById('gamma-notes').value,
+    ctaNotes:document.getElementById('cta-notes').value,
+    macroNotes:document.getElementById('macro-notes').value,
+    weeklySummary:document.getElementById('weekly-summary').value,
+    dealerRegime:document.getElementById('dealer-regime').value,
+    gammaFlip:document.getElementById('gamma-flip').value,
+    opexDate:document.getElementById('opex-date').value,
+    ctaPosture:document.getElementById('cta-posture').value,
+    ctaBuy:document.getElementById('cta-buy').value,
+    ctaSell:document.getElementById('cta-sell').value,
+    liquidityRegime:document.getElementById('liquidity-regime').value,
+    macroRisk:document.getElementById('macro-risk').value,
+    savedAt:new Date().toISOString()
+  };
+  localStorage.setItem('petroai_flowfirst', JSON.stringify(data));
+  log('Flow-First setup saved for this week.','ok');
+}
+
+function loadFFSetup() {
+  try {
+    const data = JSON.parse(localStorage.getItem('petroai_flowfirst')||'{}');
+    if(!data.savedAt) return;
+    ['g1','g2','g3','g4','g5','c1','c2','c3','c4','m1','m2','m3','m4','m5'].forEach(id=>{
+      if(data[id]!==undefined) document.getElementById(id).checked=data[id];
+    });
+    if(data.gammaNotes) document.getElementById('gamma-notes').value=data.gammaNotes;
+    if(data.ctaNotes) document.getElementById('cta-notes').value=data.ctaNotes;
+    if(data.macroNotes) document.getElementById('macro-notes').value=data.macroNotes;
+    if(data.weeklySummary) document.getElementById('weekly-summary').value=data.weeklySummary;
+    if(data.dealerRegime) document.getElementById('dealer-regime').value=data.dealerRegime;
+    if(data.gammaFlip) document.getElementById('gamma-flip').value=data.gammaFlip;
+    if(data.opexDate) document.getElementById('opex-date').value=data.opexDate;
+    if(data.ctaPosture) document.getElementById('cta-posture').value=data.ctaPosture;
+    if(data.ctaBuy) document.getElementById('cta-buy').value=data.ctaBuy;
+    if(data.ctaSell) document.getElementById('cta-sell').value=data.ctaSell;
+    if(data.liquidityRegime) document.getElementById('liquidity-regime').value=data.liquidityRegime;
+    if(data.macroRisk) document.getElementById('macro-risk').value=data.macroRisk;
+  } catch(e){}
+}
+
+function clearFFSetup() {
+  localStorage.removeItem('petroai_flowfirst');
+  location.reload();
+}
+
+setInterval(updateClock,1000); updateClock();
+loadStorage(); buildWatchlist(); startAutoScan(); startTokenRefresh();
+</script>
+</body>
+</html>
